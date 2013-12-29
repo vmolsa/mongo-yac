@@ -4,7 +4,7 @@ mongo-yac
 Yet Another MongoDB Client for NodeJS
 
         Init:
-                var db = require('mongoYac');
+                var db = require('mongo-yac');
 
                 db.config.database         = 'test';
                 db.config.username         = '';
