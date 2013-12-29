@@ -9,7 +9,6 @@ Yet Another MongoDB Client for NodeJS
     
     
 ### Usage:
-
         Init:
                 var db = require('mongo-yac');
 
@@ -22,20 +21,13 @@ Yet Another MongoDB Client for NodeJS
                 db.open(function() {
                         db.run(...);
                 });
-
         Syntax:
-
                 db.run({
                         action:        'find' || 'findOne' || 'save' || 'insert' || 'remove',
-
                         collection: 'NameOfCollection',
-
                         query: Object || '{ name: value }' || undefined,
-
                         id: String.length == 12 || undefined,
-
                         ptr: Object || Array || String || undefined,
-
                         options: {
                                 "fields": ['fieldname1', 'fieldname2', 'fieldname3'],
                                 "limit": 10,
@@ -45,9 +37,8 @@ Yet Another MongoDB Client for NodeJS
 
                 }, function() || undefined); // default function is console.log
 
-                function(retval[, ptr])        = Function returns database value and ptr from request if it's set.
-
-
+                function(retval[, ptr]) = Function returns database value and ptr from request if it's set.
+                
         Functions:
                 db.open(callback);
                 db.close();
