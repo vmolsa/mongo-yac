@@ -50,7 +50,7 @@ Using "single" connection.
                 
     Functions:
             db.open(callback);  # Creates new connection and opens database
-            db.close();         # Close connections this is safe function! (can be call if it's connected) 
+            db.close();         # Close connections this is safe function! (can be called if it's not connected) 
             db.run(..);         
 
             db.find(...);       # Alias to db.run({ action: 'find' });      This method is Faster!
