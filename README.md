@@ -35,7 +35,7 @@ Using "single" connection.
 
         db.run({
                 action: 'find' || 'findOne' || 'save' || 'insert' || 'remove',
-                collection: 'NameOfCollection', || db.config.collection
+                collection: 'NameOfCollection' || db.config.collection,
                 query: Object || '{ name: value }' || undefined,
                 id: String.length == 12 || undefined,
                 ptr: Object || Array || String || undefined, # Pointer to callback function
@@ -44,9 +44,9 @@ Using "single" connection.
                         "limit": 10,
                         "skip": 20,
                         "sort": ['fieldname2', ['fieldname1', desc], ['fieldname3', asc]],
-                } # Look options from http://mongodb.github.io/node-mongodb-native/api-generated/collection.html
+                }, # Look options from http://mongodb.github.io/node-mongodb-native/api-generated/collection.html
 
-        }, callback); # default function is db.config.default_function (default: console.log)
+        }, callback); # if callback is missing default function is db.config.default_function (default: console.log)
 
         callback(retval [,ptr]) = Function returns database value and ptr from request if it's set.
                 
