@@ -1,207 +1,446 @@
 /*
-	Copyright (c) 2013, Ville Mölsä
-	All rights reserved.
+   Copyright (c) 2013, Ville Mölsä
+   All rights reserved.
 
-	Yet Another MongoDB Client for NodeJS
+   Yet Another MongoDB Client for NodeJS. 
+   Using "single" connection.
 */
 
+var events = require('events');
+var MongoClient = require('mongodb').MongoClient;
+var ObjectID = require('mongodb').ObjectID;
+var Server = require('mongodb').Server;
+
 function mongoYac() {
-	// Variables
+   this.config = new Object({
+      database: 'test',
+      collection: 'test',
+      username: '',
+      password: '',
+      hostname: '127.0.0.1',
+      port: 27017,
+      default_function: console.log,
+      serverOptions: { auto_reconnect: true },
+   });
 
-	var MongoClient = require('mongodb').MongoClient;
-	var ObjectID = require('mongodb').ObjectID;
-	var Server = require('mongodb').Server;
+   this.con = undefined;
+   this.db = undefined;
 
-	var connection = undefined;
-	var database = undefined;
-	var config = {
-		database: 'test',
-		username: '',
-		password: '',
-		hostname: '127.0.0.1',
-		port: 27017,
-	};
+   events.EventEmitter.call(this);
+}
 
-	// Functions
+mongoYac.prototype.__proto__ = events.EventEmitter.prototype;
 
-	function checkErrors(err) {
-		if (err) {
-			console.log("Database Error:", err.message);
-			return false;
-		}
+mongoYac.prototype.checkErrors = function(err) {
+   if (err) {
+      try {
+         this.emit('error', 'Database Error: ' + err.message);
+      } catch (ignored) {
+         console.log('Database Error:', err.message);
+      }
 
-		return true;
-	}
+      return false;
+   }
 
-	function callBack(err, retval, request, callback) {
-		if (checkErrors(err) && callback) {
-			try {
-				if (request.ptr) {
-					callback(retval, request.ptr);
-				} else {
-					callback(retval);
-				}
-			} catch (err) {
-				checkErrors(err);
-			}
-		}
-	}
+   return true;
+}
 
-	function collections(request, callback) {
-		if (database) {
-			database.collection(request.collection, function(err, collection) {
-				if (checkErrors(err)) {
-					switch (request.action) {
-						case 'findOne':
-							if (request.options) {
-								collection.findOne(request.query, request.options, function(err, retval) { callBack(err, retval, request, callback); });
-							} else {
-								collection.findOne(request.query, function(err, retval) { callBack(err, retval, request, callback); });
-							}
+mongoYac.prototype.callBack = function(err, retval, request, callback) {
+   if (this.checkErrors(err) && callback) {
+      try {
+         if (request.ptr) {
+            callback(retval, request.ptr);
+         } else {
+            callback(retval);
+         }
+      } catch (err) {
+         this.checkErrors(err);
+      }
+   }
+}
 
-							break;
-						case 'save':
-							if (request.options) {
-								collection.save(request.query, request.options, function(err, retval) { callBack(err, retval, request, callback); });
-							} else {
-								collection.save(request.query, function(err, retval) { callBack(err, retval, request, callback); });
-							}
+mongoYac.prototype.open = function(callback) {   
+   var yac = this;
 
-							break;
-						case 'insert':
-							if (request.options) {
-								collection.insert(request.query, request.options, function(err, retval) { callBack(err, retval, request, callback); });
-							} else {
-								collection.insert(request.query, function(err, retval) { callBack(err, retval, request, callback); });
-							}
+   var client = new MongoClient(new Server(yac.config.hostname, yac.config.port, yac.config.serverOptions));
 
-							break;
-						case 'remove':
-							if (request.options) {
-								collection.remove(request.query, request.options, function(err, retval) { callBack(err, retval, request, callback); });
-							} else {
-								collection.remove(request.query, function(err, retval) { callBack(err, retval, request, callback); });
-							}
+   client.open(function(err, con) {
+      if (yac.checkErrors(err)) {
+         yac.con = con;
 
-							break;
-						default:
-							if (request.options) {
-								collection.find(request.query, request.options).toArray(function(err, retval) { callBack(err, retval, request, callback); });
-							} else {
-								collection.find(request.query).toArray(function(err, retval) { callBack(err, retval, request, callback); });
-							}
+         if (yac.config.database) {
+            yac.db = con.db(yac.config.database);
 
-							break;
-					}
-				}
-			});
-		} else {
-			callBack({ message: "Not connected to database!" }, undefined, request, callback);
-		}
-	}
+            if (yac.config.username && yac.config.password) {
+               yac.db.authenticate(yac.config.username, yac.config.password, function(err) {
+                  if (yac.checkErrors(err)) {
+                     callback();               
+                  } else {
+                     yac.con.close();
+                  }
+               });
+            } else {
+               callback();
+            }
+         } else {
+            callback();
+         }
+      }
+   });
+}
 
-	function open(callback) {		
-		var client = new MongoClient(new Server(config.hostname, config.port, {
-				auto_reconnect: true,
-		}));
+mongoYac.prototype.close = function(callback) {
+   var yac = this;   
 
-		client.open(function(err, con) {
-			if (checkErrors(err)) {
-				connection = con;
+   if (yac.con) {
+      yac.con.close(function(err) {
+         if (yac.checkErrors(err)) {
+            if (callback) { callback(); }
+         }
+      });
+   } 
+}
 
-				if (config.database) {
-					database = connection.db(config.database);
+mongoYac.prototype.run = function(request, callback) {
+   var yac = this;
+   var realcall = callback;
+   var query = {
+      action: '',
+      collection: yac.config.collection,
+      query: '',
+      ptr: undefined,
+      options: undefined,
+   };
 
-					if (config.username && config.password) {
-						database.authenticate(config.username, config.password, function(err) {
-							if (checkErrors(err)) {
-								callback();							
-							} else {
-								connection.close(checkErrors(err));
-							}
-						});
-					} else {
-						callback();
-					}
-				} else {
-					callback();
-				}
-			}
-		});
-	}
+   if (typeof(request) == 'function') {
+      realcall = request;
+   } else {
+      if (request != undefined || request != null) {
+         query = {
+            action	request.action		? request.action	: '',
+            collection:	request.collection	? request.collection	: yac.config.collection,
+            query:	request.query		? request.query		: '',
+            ptr:	request.ptr		? request.ptr		: undefined,
+            options:    request.options		? request.options	: undefined,
+         };
 
-	function close() {
-		if (connection) {
-			connection.close(function(err) {
-				checkErrors(err);
-			});
-		}
-	}
+         if (request.id && request.id.length == 12) {
+            query.query._id = new ObjectID(request.id);
+         }
+      }
+   }
 
-	function run(request, callback) {
-		var query = {
-			action: 	request.action 		? request.action 	: '',
-			collection: 	request.collection 	? request.collection 	: '',
-			query: 		request.query 		? request.query 	: '',
-			ptr: 		request.ptr 		? request.ptr 		: undefined,
-			options: 	request.options 	? request.options 	: undefined,
-		};
+   if (realcall == undefined || realcall == null) {
+      realcall = yac.config.default_function;
+   }
 
-		if (request.id && request.id.length == 12) {
-			query.query._id = new ObjectID(request.id);
-		} 
+   if (yac.db) {
+      yac.db.collection(query.collection, function(err, collection) {
+         if (yac.checkErrors(err)) {
+            try {
+               switch (query.action) {
+                  case 'findOne':
+                     if (query.options) {
+                        collection.findOne(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     } else {
+                        collection.findOne(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     }
 
-		if (callback == undefined) {
-			callback = console.log;
-		}
+                     break;
+                  case 'save':
+                     if (query.options) {
+                        collection.save(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     } else {
+                        collection.save(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     }
 
-		collections(query, callback);
-	}
+                     break;
+                  case 'insert':
+                     if (query.options) {
+                        collection.insert(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     } else {
+                        collection.insert(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     }
 
-	function find(request, callback) {
-		request.action = 'find';
+                     break;
+                  case 'remove':
+                     if (query.options) {
+                        collection.remove(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     } else {
+                        collection.remove(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     }
 
-		run(request, callback);
-	}
+                     break;
+                  default:
+                     if (query.options) {
+                        collection.find(query.query, query.options).toArray(function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     } else {
+                        collection.find(query.query).toArray(function(err, retval) { yac.callBack(err, retval, query, realcall); });
+                     }
 
-	function findOne(request, callback) {
-		request.action = 'findOne';
+                     break;
+               }
+            } catch   (err) {
+               yac.callBack(err, undefined, query, realcall);
+            }
+         }
+      });
+   } else {
+      yac.callBack({ message: "Not connected to database!" }, undefined, query, realcall);
+   }
+}
 
-		run(request, callback);
-	}
+mongoYac.prototype.find = function(request, callback) {
+   var yac = this;
+   var realcall = callback;
+   var query = {
+      collection: yac.config.collection,
+      query: '',
+      ptr: undefined,
+      options: undefined,
+   };
 
-	function save(request, callback) {
-		request.action = 'save';
+   if (typeof(request) == 'function') {
+      realcall = request;
+   } else {
+      if (request != undefined || request != null) {
+         query = {
+            collection:	request.collection	? request.collection	: yac.config.collection,
+            query:	request.query		? request.query		: '',
+            ptr:	request.ptr		? request.ptr		: undefined,
+            options:    request.options		? request.options	: undefined,
+         };
 
-		run(request, callback);
-	}
+         if (request.id && request.id.length == 12) {
+            query.query._id = new ObjectID(request.id);
+         }
+      }
+   }
 
-	function insert(request, callback) {
-		request.action = 'insert';
+   if (realcall == undefined || realcall == null) {
+      realcall = yac.config.default_function;
+   }
 
-		run(request, callback);
-	}
+   if (yac.db) {
+      yac.db.collection(query.collection, function(err, collection) {
+         if (yac.checkErrors(err)) {
+            try {
+               if (query.options) {
+                  collection.find(query.query, query.options).toArray(function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               } else {
+                  collection.find(query.query).toArray(function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               }
+            } catch   (err) {
+               yac.callBack(err, undefined, query, realcall);
+            }
+         }
+      });
+   } else {
+      yac.callBack({ message: "Not connected to database!" }, undefined, query, realcall);
+   }
+}
 
-	function remove(request, callback) {
-		request.action = 'remove';
+mongoYac.prototype.findOne = function(request, callback) {
+   var yac = this;
+   var realcall = callback;
+   var query = {
+      collection: yac.config.collection,
+      query: '',
+      ptr: undefined,
+      options: undefined,
+   };
 
-		run(request, callback);
-	}
+   if (typeof(request) == 'function') {
+      realcall = request;
+   } else {
+      if (request != undefined || request != null) {
+         query = {
+            collection:	request.collection	? request.collection	: yac.config.collection,
+            query:	request.query		? request.query		: '',
+            ptr:	request.ptr		? request.ptr		: undefined,
+            options:    request.options		? request.options	: undefined,
+         };
 
-	// Define Object Functions
+         if (request.id && request.id.length == 12) {
+            query.query._id = new ObjectID(request.id);
+         }
+      }
+   }
 
-	this.open 	= open;
-	this.close 	= close;
-	this.run 	= run;
-	this.find 	= find;
-	this.findOne	= findOne;
-	this.save	= save;
-	this.insert	= insert;
-	this.remove	= remove;
-	this.config	= config;
+   if (realcall == undefined || realcall == null) {
+      realcall = yac.config.default_function;
+   }
+
+   if (yac.db) {
+      yac.db.collection(query.collection, function(err, collection) {
+         if (yac.checkErrors(err)) {
+            try {
+               if (query.options) {
+                  collection.findOne(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               } else {
+                  collection.findOne(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               }
+            } catch   (err) {
+               yac.callBack(err, undefined, query, realcall);
+            }
+         }
+      });
+   } else {
+      yac.callBack({ message: "Not connected to database!" }, undefined, query, realcall);
+   }
+}
+
+mongoYac.prototype.save = function(request, callback) {
+   var yac = this;
+   var realcall = callback;
+   var query = {
+      collection: yac.config.collection,
+      query: '',
+      ptr: undefined,
+      options: undefined,
+   };
+
+   if (typeof(request) == 'function') {
+      realcall = request;
+   } else {
+      if (request != undefined || request != null) {
+         query = {
+            collection:	request.collection	? request.collection	: yac.config.collection,
+            query:	request.query		? request.query		: '',
+            ptr:	request.ptr		? request.ptr		: undefined,
+            options:    request.options		? request.options	: undefined,
+         };
+
+         if (request.id && request.id.length == 12) {
+            query.query._id = new ObjectID(request.id);
+         }
+      }
+   }
+
+   if (realcall == undefined || realcall == null) {
+      realcall = yac.config.default_function;
+   }
+
+   if (yac.db) {
+      yac.db.collection(query.collection, function(err, collection) {
+         if (yac.checkErrors(err)) {
+            try {
+               if (query.options) {
+                  collection.save(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               } else {
+                  collection.save(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               }
+            } catch   (err) {
+               yac.callBack(err, undefined, query, realcall);
+            }
+         }
+      });
+   } else {
+      yac.callBack({ message: "Not connected to database!" }, undefined, query, realcall);
+   }
+}
+
+mongoYac.prototype.insert = function(request, callback) {
+   var yac = this;
+   var realcall = callback;
+
+   var query = {
+      collection: yac.config.collection,
+      query: '',
+      ptr: undefined,
+      options: undefined,
+   };
+
+   if (typeof(request) == 'function') {
+      realcall = request;
+   } else {
+      if (request) {
+         query = {
+            collection:	request.collection	? request.collection	: yac.config.collection,
+            query:	request.query		? request.query		: '',
+            ptr:	request.ptr		? request.ptr		: undefined,
+            options:    request.options		? request.options	: undefined,
+         };
+
+         if (request.id && request.id.length == 12) {
+            query.query._id = new ObjectID(request.id);
+         }
+      }
+   }
+
+   if (realcall == undefined || realcall == null) {
+      realcall = yac.config.default_function;
+   }
+
+   if (yac.db) {
+      yac.db.collection(query.collection, function(err, collection) {
+         if (yac.checkErrors(err)) {
+            try {
+               if (query.options) {
+                  collection.insert(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               } else {
+                  collection.insert(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               }
+            } catch   (err) {
+               yac.callBack(err, undefined, query, realcall);
+            }
+         }
+      });
+   } else {
+      yac.callBack({ message: "Not connected to database!" }, undefined, query, realcall);
+   }
+}
+
+mongoYac.prototype.remove = function(request, callback) {
+   var yac = this;
+   var realcall = callback;
+   var query = {
+      collection: yac.config.collection,
+      query: '',
+      ptr: undefined,
+      options: undefined,
+   };
+
+   if (typeof(request) == 'function') {
+      realcall = request;
+   } else {
+      if (request != undefined || request != null) {
+         query = {
+            collection:	request.collection	? request.collection	: yac.config.collection,
+            query:	request.query		? request.query		: '',
+            ptr:	request.ptr		? request.ptr		: undefined,
+            options:    request.options		? request.options	: undefined,
+         };
+
+         if (request.id && request.id.length == 12) {
+            query.query._id = new ObjectID(request.id);
+         }
+      }
+   }
+
+   if (realcall == undefined || realcall == null) {
+      realcall = yac.config.default_function;
+   }
+
+   if (yac.db) {
+      yac.db.collection(query.collection, function(err, collection) {
+         if (yac.checkErrors(err)) {
+            try {
+               if (query.options) {
+                  collection.remove(query.query, query.options, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               } else {
+                  collection.remove(query.query, function(err, retval) { yac.callBack(err, retval, query, realcall); });
+               }
+            } catch   (err) {
+               yac.callBack(err, undefined, query, realcall);
+            }
+         }
+      });
+   } else {
+      yac.callBack({ message: "Not connected to database!" }, undefined, query, realcall);
+   }
 }
 
 // Exports
 
-module.exports = new mongoYac();
-
+module.exports = mongoYac;
