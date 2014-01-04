@@ -1,7 +1,7 @@
 { 
 	"name" : "mongo-yac",
 	"description" : "Yet Another MongoDB Client for NodeJS",
-	"version" : "1.0.7",
+	"version" : "1.0.8",
 	"url" : "https://github.com/vmolsa/mongo-yac",
 	"license" : "MIT",
 	"repository" : { "type" : "git", "url" : "https://github.com/vmolsa/mongo-yac" },
