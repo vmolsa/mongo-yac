@@ -38,7 +38,7 @@ Using "single" connection.
                 collection: 'NameOfCollection', || db.config.collection
                 query: Object || '{ name: value }' || undefined,
                 id: String.length == 12 || undefined,
-                ptr: Object || Array || String || undefined, # Pointer to function
+                ptr: Object || Array || String || undefined, # Pointer to callback function
                 options: {
                         "fields": ['fieldname1', 'fieldname2', 'fieldname3'],
                         "limit": 10,
@@ -46,9 +46,9 @@ Using "single" connection.
                         "sort": ['fieldname2', ['fieldname1', desc], ['fieldname3', asc]],
                 } # Look options from http://mongodb.github.io/node-mongodb-native/api-generated/collection.html
 
-        }, function() || undefined); # default function is db.config.default_function (default: console.log)
+        }, callback); # default function is db.config.default_function (default: console.log)
 
-        function(retval [,ptr]) = Function returns database value and ptr from request if it's set.
+        callback(retval [,ptr]) = Function returns database value and ptr from request if it's set.
                 
 ### Functions:
 
