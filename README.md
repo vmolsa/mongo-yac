@@ -46,17 +46,15 @@ Using "single" connection.
                         "skip": 20,
                         "sort": ['fieldname2', ['fieldname1', desc], ['fieldname3', asc]],
                 }, # Look options from http://mongodb.github.io/node-mongodb-native/api-generated/collection.html
-
         }, callback); # if callback is missing default function is db.config.default_function (default: console.log)
 
         callback(retval [,ptr]) = Function returns database value and ptr from request if it's set.
                 
 ### Functions:
 
-        db.open(callback);  # Creates new connection and opens database
-        db.close();         # Close connections this is safe function! (can be called if it's not connected) 
+        db.open(callback);  # Open new connections and opens database
+        db.close();         # Close connections. This is safe function! (can be called if it is not connected) 
         db.run(..);         
-
         db.find(...);       # Alias to db.run({ action: 'find' });      This method is Faster!
         db.findOne(...);    # Alias to db.run({ action: 'findOne' });   This method is Faster!
         db.save(...);       # Alias to db.run({ action: 'save' });      This method is Faster!
