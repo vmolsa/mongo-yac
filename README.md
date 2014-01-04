@@ -10,8 +10,9 @@ Using "single" connection.
     
 ### Usage:
 
-        var db = require('mongo-yac');
+        var mongoYac = require('mongo-yac');
 
+        var db = new mongoYac();
         db.config.database          = 'test';
         db.config.collection        = 'test';
         db.config.username          = '';
