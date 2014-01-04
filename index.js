@@ -117,11 +117,11 @@ mongoYac.prototype.run = function(request, callback) {
    } else {
       if (request != undefined || request != null) {
          query = {
-            action      request.action     ? request.action:     '',
-            collection: request.collection ? request.collection: yac.config.collection,
-            query:      request.query      ? request.query:      '',
-            ptr:        request.ptr        ? request.ptr:        undefined,
-            options:    request.options    ? request.options:    undefined,
+            action:     request.action     ? request.action     : '',
+            collection: request.collection ? request.collection : yac.config.collection,
+            query:      request.query      ? request.query      : '',
+            ptr:        request.ptr        ? request.ptr        : undefined,
+            options:    request.options    ? request.options    : undefined,
          };
 
          if (request.id && request.id.length == 12) {
@@ -205,10 +205,10 @@ mongoYac.prototype.find = function(request, callback) {
    } else {
       if (request != undefined || request != null) {
          query = {
-            collection: request.collection ? request.collection: yac.config.collection,
-            query:      request.query      ? request.query:      '',
-            ptr:        request.ptr        ? request.ptr:        undefined,
-            options:    request.options    ? request.options:    undefined,
+            collection: request.collection ? request.collection : yac.config.collection,
+            query:      request.query      ? request.query      : '',
+            ptr:        request.ptr        ? request.ptr        : undefined,
+            options:    request.options    ? request.options    : undefined,
          };
 
          if (request.id && request.id.length == 12) {
@@ -255,10 +255,10 @@ mongoYac.prototype.findOne = function(request, callback) {
    } else {
       if (request != undefined || request != null) {
          query = {
-            collection: request.collection ? request.collection: yac.config.collection,
-            query:      request.query      ? request.query:      '',
-            ptr:        request.ptr        ? request.ptr:        undefined,
-            options:    request.options    ? request.options:    undefined,
+            collection: request.collection ? request.collection : yac.config.collection,
+            query:      request.query      ? request.query      : '',
+            ptr:        request.ptr        ? request.ptr        : undefined,
+            options:    request.options    ? request.options    : undefined,
          };
 
          if (request.id && request.id.length == 12) {
@@ -305,10 +305,10 @@ mongoYac.prototype.save = function(request, callback) {
    } else {
       if (request != undefined || request != null) {
          query = {
-            collection: request.collection ? request.collection: yac.config.collection,
-            query:      request.query      ? request.query:      '',
-            ptr:        request.ptr        ? request.ptr:        undefined,
-            options:    request.options    ? request.options:    undefined,
+            collection: request.collection ? request.collection : yac.config.collection,
+            query:      request.query      ? request.query      : '',
+            ptr:        request.ptr        ? request.ptr        : undefined,
+            options:    request.options    ? request.options    : undefined,
          };
 
          if (request.id && request.id.length == 12) {
@@ -356,10 +356,10 @@ mongoYac.prototype.insert = function(request, callback) {
    } else {
       if (request) {
          query = {
-            collection: request.collection ? request.collection: yac.config.collection,
-            query:      request.query      ? request.query:      '',
-            ptr:        request.ptr        ? request.ptr:        undefined,
-            options:    request.options    ? request.options:    undefined,
+            collection: request.collection ? request.collection : yac.config.collection,
+            query:      request.query      ? request.query      : '',
+            ptr:        request.ptr        ? request.ptr        : undefined,
+            options:    request.options    ? request.options    : undefined,
          };
 
          if (request.id && request.id.length == 12) {
@@ -406,10 +406,10 @@ mongoYac.prototype.remove = function(request, callback) {
    } else {
       if (request != undefined || request != null) {
          query = {
-            collection: request.collection ? request.collection: yac.config.collection,
-            query:      request.query      ? request.query:      '',
-            ptr:        request.ptr        ? request.ptr:        undefined,
-            options:    request.options    ? request.options:    undefined,
+            collection: request.collection ? request.collection : yac.config.collection,
+            query:      request.query      ? request.query      : '',
+            ptr:        request.ptr        ? request.ptr        : undefined,
+            options:    request.options    ? request.options    : undefined,
          };
 
          if (request.id && request.id.length == 12) {
