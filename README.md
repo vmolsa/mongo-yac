@@ -19,7 +19,7 @@ Using "single" connection.
             db.config.hostname          = '127.0.0.1';
             db.config.port              = 27017;
             db.config.default_function  = console.log;
-            db.config.serverOptions     = { auto_reconnect: true }; # Look options from [mongodb](http://mongodb.github.io/node-mongodb-native/api-generated/server.html?highlight=server)
+            db.config.serverOptions     = { auto_reconnect: true }; # Look options from http://mongodb.github.io/node-mongodb-native/api-generated/server.html?highlight=server
 
             db.open(function() {
                     db.run({...}, function() {
@@ -42,7 +42,7 @@ Using "single" connection.
                             "limit": 10,
                             "skip": 20,
                             "sort": ['fieldname2', ['fieldname1', desc], ['fieldname3', asc]],
-                    } # Look options from [mongodb](http://mongodb.github.io/node-mongodb-native/api-generated/collection.html)
+                    } # Look options from http://mongodb.github.io/node-mongodb-native/api-generated/collection.html
 
             }, function() || undefined); # default function is db.config.default_function (default: console.log)
 
